@@ -1,0 +1,39 @@
+services:
+  # O servidor Web (Nginx)
+  nginx:
+    image: nginx:stable-alpine
+    ports:
+      - "${DOCKER_NGINX_PORT:-8000}:80"
+    volumes:
+      # o Docker usa a variável para montar Apenas a pasta do projeto correto
+      - "${PROJECT_PATH}:/var/www/html"
+      - ./docker/nginx/nginx.conf:/etc/nginx/conf.d/default.conf
+    depends_on:
+      - app
+    # container_name: nginx-cursoLaravel // removido para suportar dois projetos distintos
+
+  # A Aplicação (PHP + Laravel)
+  app:
+    build:
+      context: .
+      dockerfile: ./docker/php/Dockerfile
+    volumes:
+      - "${PROJECT_PATH}:/var/www/html" 
+    depends_on:
+      - db
+    # container_name: app-cursoLaravel  //removido para evitar conflito global
+
+  # O Banco de Dados (MySQL)
+  db:
+    image: mysql:8.0
+    ports:
+      - "${DOCKER_MYSQL_PORT:-3306}:3306"
+    environment:
+      MYSQL_DATABASE: "${DB_DATABASE:-laravel_db}"
+      MYSQL_ROOT_PASSWORD: "${DB_PASSWORD:-root}"      
+    volumes:
+      - dbdata:/var/lib/mysql
+    #container_name: db-cursoLaravel  //removido para evitar conflito global
+
+volumes:
+  dbdata:
